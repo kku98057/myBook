@@ -1,4 +1,4 @@
-import { GroupProps, useFrame } from '@react-three/fiber';
+import { GroupProps, useFrame, useThree } from '@react-three/fiber';
 import { pageProps } from '../types/pageTypes';
 import { pages } from './UI';
 import gsap from 'gsap';
@@ -300,21 +300,24 @@ export default function Book({ ...props }: { control: any } & any) {
   const cont = useControls('mehs', options.position);
   const rota = useControls('rota', options.rotation);
 
+  const aspectRatio = window.innerWidth / window.innerHeight;
   useEffect(() => {
-    if (delayedPage === 0) {
+    if (page === 0) {
       gsap.to(bookRef.current.position, {
-        x: -0.6,
+        x: -0.4 * aspectRatio, // 비율을 적용하여 조정
+        delay: 0.7,
       });
-    } else if (delayedPage === pages.length) {
+    } else if (page === pages.length) {
       gsap.to(bookRef.current.position, {
-        x: 0.6,
+        x: 0.4 * aspectRatio,
+        delay: 0.7,
       });
     } else {
       gsap.to(bookRef.current.position, {
-        x: 0,
+        x: -aspectRatio,
       });
     }
-  }, [delayedPage]);
+  }, [page]);
 
   return (
     <group

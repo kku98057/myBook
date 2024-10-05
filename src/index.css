@@ -1,6 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --fhd: 1920px;
+  --desktop: 1440px;
+  --desktop: 1440px;
+  --labtop: 1024px;
+  --mob: 768px;
+}
+
 * {
   padding: 0;
   margin: 0;

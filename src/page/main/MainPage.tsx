@@ -4,14 +4,17 @@ import Experience from '../../components/Experience';
 import { Loader } from '@react-three/drei';
 import { usePageStore } from '../../store/pageAtom';
 import { pages } from '../../components/UI';
-
 export default function MainPage() {
   const { setPage, page } = usePageStore((state) => state);
 
   return (
     <>
       <Loader />
-      <Canvas shadows camera={{ position: [0.5, 1, 4], fov: 45 }}>
+      <Canvas
+        shadows
+        camera={{ position: [0.5, 1, 4], fov: 45 }}
+        style={{ position: 'fixed', top: 0 }}
+      >
         <group position-y={0}>
           <Suspense fallback={null}>
             <Experience />
@@ -20,7 +23,6 @@ export default function MainPage() {
       </Canvas>
       <ul className="fixed bottom-[20px] left-[50%] translate-x-[-50%]  flex gap-[20px]">
         {[...pages].map((list, index) => {
-          console.log(index);
           if (index === 0) {
             return (
               <li
