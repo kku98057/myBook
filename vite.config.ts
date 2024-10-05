@@ -5,6 +5,7 @@ import tailwindcss from 'tailwindcss';
 export default defineConfig({
   plugins: [react()],
   base: '/myBook/',
+  assetsInclude: ['**/*.hdr', '**/*.glb'],
   css: {
     postcss: {
       plugins: [tailwindcss()],
