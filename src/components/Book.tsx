@@ -301,9 +301,13 @@ export default function Book({ ...props }: { control: any } & any) {
   const rota = useControls('rota', options.rotation);
 
   useEffect(() => {
-    if (delayedPage === 0 || delayedPage === pages.length - 1) {
+    if (delayedPage === 0) {
       gsap.to(bookRef.current.position, {
         x: -0.6,
+      });
+    } else if (delayedPage === pages.length) {
+      gsap.to(bookRef.current.position, {
+        x: 0.6,
       });
     } else {
       gsap.to(bookRef.current.position, {

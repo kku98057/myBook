@@ -23,7 +23,7 @@ export default function MainPage() {
           <li
             onClick={() => setPage(list.id)}
             className={`cursor-pointer flex items-center justify-center px-[20px] py-[5px] rounded-full border-[1px] bg-[rgba(180,180,180,0.2)] text-white whitespace-nowrap ${
-              page === list.id ? '!bg-white text-black' : ''
+              page === list.id ? '!bg-white !text-black' : ''
             }`}
             key={`페이지버튼${list.id}`}
           >
