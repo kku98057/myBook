@@ -283,24 +283,6 @@ export default function Book({ ...props }: { control: any } & any) {
   // useHelper(bookRef, BoxHelper);
   const aspectRatio = window.innerWidth / window.innerHeight;
 
-  const options = useMemo(() => {
-    return {
-      position: {
-        x: { value: -0.3 * aspectRatio, min: -10, max: 10, step: 0.1 },
-        y: { value: 0, min: -10, max: 10, step: 0.1 },
-        z: { value: 0, min: -10, max: 10, step: 0.1 },
-      },
-      rotation: {
-        x: { value: 0, min: -Math.PI * 2, max: Math.PI * 2, step: 0.01 },
-        y: { value: -1.34, min: -Math.PI * 2, max: Math.PI * 2, step: 0.01 },
-        z: { value: 0.11, min: -Math.PI * 2, max: Math.PI * 2, step: 0.01 },
-      },
-    };
-  }, []);
-
-  const cont = useControls('mehs', options.position);
-  const rota = useControls('rota', options.rotation);
-
   useEffect(() => {
     if (page === 0) {
       gsap.to(bookRef.current.position, {
@@ -323,8 +305,8 @@ export default function Book({ ...props }: { control: any } & any) {
     <group
       {...props}
       ref={bookRef}
-      position={[cont.x, cont.y, cont.z]}
-      rotation={[rota.x, rota.y, rota.z]}
+      position={[-0.3 * aspectRatio, 0, 0]}
+      rotation={[0, -1.34, 0.11]}
     >
       {[...pages].map((pageData, index) => (
         <Page
