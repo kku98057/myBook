@@ -4,30 +4,13 @@ import { Suspense } from 'react';
 import Experience from '../../components/Experience';
 import { Loader } from '@react-three/drei';
 import { usePageStore } from '../../store/pageAtom';
+import { pages } from '../../components/UI';
 
 export default function MainPage() {
-  const { page, nextPage, prevPage } = usePageStore((state) => state);
+  const { setPage, page } = usePageStore((state) => state);
+
   return (
     <>
-      {page}
-      <button
-        onClick={() => {
-          if (page > 16) return;
-          nextPage(1);
-        }}
-        type="button"
-      >
-        다음
-      </button>
-      <button
-        onClick={() => {
-          if (page === 0) return;
-          prevPage(1);
-        }}
-        type="button"
-      >
-        이전
-      </button>
       <Loader />
       <Canvas shadows camera={{ position: [-0.5, 1, 4], fov: 45 }}>
         <group position-y={0}>
@@ -36,6 +19,19 @@ export default function MainPage() {
           </Suspense>
         </group>
       </Canvas>
+      <ul className="fixed bottom-[20px] left-[50%] translate-x-[-50%]  flex gap-[20px]">
+        {pages.map((list, index) => (
+          <li
+            onClick={() => setPage(list.id)}
+            className={`cursor-pointer flex items-center justify-center px-[20px] py-[5px] rounded-full border-[1px] bg-[rgba(180,180,180,0.2)] text-white whitespace-nowrap ${
+              page === list.id ? '!bg-white text-black' : ''
+            }`}
+            key={`페이지버튼${list.id}`}
+          >
+            {index === 0 ? '커버' : index === pages.length - 1 ? '맨뒷장' : index}
+          </li>
+        ))}
+      </ul>
     </>
   );
 }
