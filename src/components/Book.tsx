@@ -67,6 +67,7 @@ for (let i = 0; i < position.count; i++) {
 }
 
 const whiteColor = new Color('white');
+const emissiveColor = new Color('orange');
 pageGeometry.setAttribute('skinIndex', new Uint16BufferAttribute(skinIndexes, 4));
 pageGeometry.setAttribute('skinWeight', new Float32BufferAttribute(skinWeights, 4));
 const pageMaterials = [
@@ -146,6 +147,8 @@ const Page = memo(
           color: whiteColor,
           map: picture,
           ...(number === 0 ? { roughnessMap: pictureRoughness } : { roughness: 0.1 }),
+          emissive: emissiveColor,
+          emissiveIntensity: 0,
         }),
         new MeshStandardMaterial({
           color: whiteColor,
@@ -153,6 +156,8 @@ const Page = memo(
           ...(number === pages.length - 1
             ? { roughnessMap: pictureRoughness }
             : { roughness: 0.1 }),
+          emissive: emissiveColor,
+          emissiveIntensity: 0,
         }),
       ];
       const mesh = new SkinnedMesh(pageGeometry, materials);
@@ -171,6 +176,13 @@ const Page = memo(
         return;
       }
 
+      const emissiveIntensity = highlighted ? 0.22 : 0;
+      skinnedMeshRef.current.material[4].emissiveIntensity =
+        skinnedMeshRef.current.material[5].emissiveIntensity = MathUtils.lerp(
+          skinnedMeshRef.current.material[4].emissiveIntensity,
+          emissiveIntensity,
+          0.1
+        );
       if (lastOpened.current !== opened) {
         turnedAt.current = +new Date().getTime();
         lastOpened.current = opened;
@@ -295,25 +307,6 @@ export default function Book({ ...props }: { control: any } & any) {
 
   const cont = useControls('mehs', options.position);
   const rota = useControls('rota', options.rotation);
-
-  // useGSAP(() => {
-  //   console.log(page);
-  //   if (page === 0 || page === pages.length - 1) {
-  //     const tl = gsap.timeline();
-  //     tl.to(bookRef.current.position, {
-  //       x: -0.6,
-  //     }).to(bookRef.current.rotation, {
-  //       y: 5,
-  //     });
-  //   } else {
-  //     const tl = gsap.timeline();
-  //     tl.to(bookRef.current.position, {
-  //       x: 0,
-  //     }).to(bookRef.current.rotation, {
-  //       y: 0,
-  //     });
-  //   }
-  // });
 
   useEffect(() => {
     if (delayedPage === 0 || delayedPage === pages.length - 1) {

@@ -14,7 +14,11 @@ export default function Experience() {
         minDistance={3} // 최소 줌 거리
         maxDistance={5} // 최대 줌 거리
         enableZoom={true} // 줌 활성화
-        enableRotate={false}
+        // enableRotate={false}
+        // minPolarAngle={Math.PI / 6} // 세로 회전 제한 (45도)
+        // maxPolarAngle={Math.PI / 2} // 세로 회전 제한 (90도)
+        // minAzimuthAngle={-Math.PI / 2} // 수평 회전 제한 (-90도)
+        // maxAzimuthAngle={Math.PI / 2} // 수평 회전 제한 (90도)
       />
       <Environment preset="studio" />
 
