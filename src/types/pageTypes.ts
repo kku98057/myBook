@@ -7,4 +7,5 @@ export interface pageState {
   page: number;
   nextPage: (by: number) => void;
   prevPage: (by: number) => void;
+  setPage: (by: number) => void;
 }
