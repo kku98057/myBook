@@ -78,9 +78,9 @@ const pageMaterials = [
 ];
 
 pages.forEach((page) => {
-  useTexture.preload(`/textures/${page.front}.jpg`);
-  useTexture.preload(`/textures/${page.back}.jpg`);
-  useTexture.preload(`/textures/book-cover-roughness.jpg`);
+  useTexture.preload(`${import.meta.env.BASE_URL}/textures/${page.front}.jpg`);
+  useTexture.preload(`${import.meta.env.BASE_URL}/textures/${page.back}.jpg`);
+  useTexture.preload(`${import.meta.env.BASE_URL}/textures/book-cover-roughness.jpg`);
 });
 
 const Page = memo(
@@ -99,10 +99,10 @@ const Page = memo(
     bookClose: boolean;
   } & GroupProps) => {
     const [picture, picture2, pictureRoughness] = useTexture([
-      `/textures/${data.front}.jpg`,
-      `/textures/${data.back}.jpg`,
+      `${import.meta.env.BASE_URL}/textures/${data.front}.jpg`,
+      `${import.meta.env.BASE_URL}/textures/${data.back}.jpg`,
       ...(number === 0 || number === pages.length - 1
-        ? [`/textures/book-cover-roughness.jpg`]
+        ? [`${import.meta.env.BASE_URL}/textures/book-cover-roughness.jpg`]
         : []),
     ]);
     // RGB(빨간색, 녹색, 파란색) 값으로 표현하며, 모니터와 같은 디스플레이 장치에서 색상을 정확하게 표시하기 위해 사용
