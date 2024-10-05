@@ -1,7 +1,6 @@
-import { Environment, Float, OrbitControls, OrbitControlsProps } from '@react-three/drei';
+import { Environment, OrbitControls } from '@react-three/drei';
 import Book from './Book';
-import { useThree } from '@react-three/fiber';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 
 export default function Experience() {
   const control = useRef<any>(null);

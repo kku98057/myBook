@@ -1,4 +1,4 @@
-import { GroupProps, useFrame, useThree } from '@react-three/fiber';
+import { GroupProps, useFrame } from '@react-three/fiber';
 import { pageProps } from '../types/pageTypes';
 import { pages } from './UI';
 import gsap from 'gsap';
@@ -6,30 +6,22 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bone,
   BoxGeometry,
-  BoxHelper,
   Color,
-  CylinderGeometry,
   Float32BufferAttribute,
   Group,
-  IcosahedronGeometry,
-  MeshNormalMaterial,
   MeshStandardMaterial,
   Object3DEventMap,
   Skeleton,
-  SkeletonHelper,
   SkinnedMesh,
-  SphereGeometry,
   SRGBColorSpace,
-  TextureLoader,
   Uint16BufferAttribute,
   Vector3,
 } from 'three';
-import { useCursor, useHelper, useTexture } from '@react-three/drei';
-import { degToRad, MathUtils, radToDeg } from 'three/src/math/MathUtils.js';
+import { useCursor, useTexture } from '@react-three/drei';
+import { degToRad, MathUtils } from 'three/src/math/MathUtils.js';
 import { usePageStore } from '../store/pageAtom';
 import { easing } from 'maath';
-import { isFormElement } from 'react-router-dom/dist/dom';
-import { useGSAP } from '@gsap/react';
+
 import { useControls } from 'leva';
 
 const easingFactor = 0.35; // 책 넘기는 속도
@@ -229,7 +221,7 @@ const Page = memo(
         );
       }
     });
-    const { page: p, setPage } = usePageStore((state) => state);
+    const { setPage } = usePageStore((state) => state);
     const [highlighted, setHighlighted] = useState(false);
     useCursor(highlighted);
     const handleClick = useCallback(

@@ -1,4 +1,3 @@
-import { div } from 'three/webgpu';
 import { pageProps } from '../types/pageTypes';
 
 const pictures = [

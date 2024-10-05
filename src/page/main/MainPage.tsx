@@ -1,12 +1,9 @@
 import { Canvas } from '@react-three/fiber';
-import Book from '../../components/Book';
-import { Suspense, useMemo } from 'react';
+import { Suspense } from 'react';
 import Experience from '../../components/Experience';
-import { Center, Loader } from '@react-three/drei';
+import { Loader } from '@react-three/drei';
 import { usePageStore } from '../../store/pageAtom';
 import { pages } from '../../components/UI';
-import { radToDeg } from 'three/src/math/MathUtils.js';
-import { useControls } from 'leva';
 
 export default function MainPage() {
   const { setPage, page } = usePageStore((state) => state);
