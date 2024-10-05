@@ -1,11 +1,21 @@
-import { Environment, OrbitControls } from '@react-three/drei';
+import { Environment, Float, OrbitControls, OrbitControlsProps } from '@react-three/drei';
 import Book from './Book';
+import { useThree } from '@react-three/fiber';
+import { useEffect, useRef } from 'react';
 
 export default function Experience() {
+  const control = useRef<any>(null);
   return (
     <>
-      <Book />
-      <OrbitControls />
+      <Book control={control} />
+
+      <OrbitControls
+        ref={control}
+        minDistance={3} // 최소 줌 거리
+        maxDistance={5} // 최대 줌 거리
+        enableZoom={true} // 줌 활성화
+        enableRotate={false}
+      />
       <Environment preset="studio" />
 
       <directionalLight

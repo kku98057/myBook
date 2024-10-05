@@ -1,10 +1,12 @@
-import { GroupProps, useFrame } from '@react-three/fiber';
+import { GroupProps, useFrame, useThree } from '@react-three/fiber';
 import { pageProps } from '../types/pageTypes';
 import { pages } from './UI';
+import gsap from 'gsap';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bone,
   BoxGeometry,
+  BoxHelper,
   Color,
   CylinderGeometry,
   Float32BufferAttribute,
@@ -23,9 +25,12 @@ import {
   Vector3,
 } from 'three';
 import { useCursor, useHelper, useTexture } from '@react-three/drei';
-import { degToRad, MathUtils } from 'three/src/math/MathUtils.js';
+import { degToRad, MathUtils, radToDeg } from 'three/src/math/MathUtils.js';
 import { usePageStore } from '../store/pageAtom';
 import { easing } from 'maath';
+import { isFormElement } from 'react-router-dom/dist/dom';
+import { useGSAP } from '@gsap/react';
+import { useControls } from 'leva';
 
 const easingFactor = 0.35; // 책 넘기는 속도
 const easingFactorFold = 0.3;
@@ -159,7 +164,7 @@ const Page = memo(
       return mesh;
     }, []);
 
-    //   useHelper(skinnedMeshRef, SkeletonHelper);
+    // useHelper(skinnedMeshRef, SkeletonHelper);
 
     useFrame((_, delta) => {
       if (!skinnedMeshRef.current) {
@@ -247,7 +252,8 @@ const Page = memo(
   }
 );
 
-export default function Book({ ...props }) {
+export default function Book({ ...props }: { control: any } & any) {
+  const bookRef = useRef<any>(null);
   const { page } = usePageStore((state) => state);
   const [delayedPage, setDelayedPage] = useState<number>(page);
 
@@ -269,8 +275,65 @@ export default function Book({ ...props }) {
       clearTimeout(timeout); // 타이머 정리
     };
   }, [page, delayedPage]);
+
+  // useHelper(bookRef, BoxHelper);
+
+  const options = useMemo(() => {
+    return {
+      position: {
+        x: { value: -0.6, min: -10, max: 10, step: 0.1 },
+        y: { value: 0, min: -10, max: 10, step: 0.1 },
+        z: { value: 0, min: -10, max: 10, step: 0.1 },
+      },
+      rotation: {
+        x: { value: 0, min: 0, max: Math.PI * 2, step: 0.01 },
+        y: { value: -1.34, min: -Math.PI * 2, max: Math.PI * 2, step: 0.01 },
+        z: { value: 0, min: 0, max: Math.PI * 2, step: 0.01 },
+      },
+    };
+  }, []);
+
+  const cont = useControls('mehs', options.position);
+  const rota = useControls('rota', options.rotation);
+
+  // useGSAP(() => {
+  //   console.log(page);
+  //   if (page === 0 || page === pages.length - 1) {
+  //     const tl = gsap.timeline();
+  //     tl.to(bookRef.current.position, {
+  //       x: -0.6,
+  //     }).to(bookRef.current.rotation, {
+  //       y: 5,
+  //     });
+  //   } else {
+  //     const tl = gsap.timeline();
+  //     tl.to(bookRef.current.position, {
+  //       x: 0,
+  //     }).to(bookRef.current.rotation, {
+  //       y: 0,
+  //     });
+  //   }
+  // });
+
+  useEffect(() => {
+    if (delayedPage === 0 || delayedPage === pages.length - 1) {
+      gsap.to(bookRef.current.position, {
+        x: -0.6,
+      });
+    } else {
+      gsap.to(bookRef.current.position, {
+        x: 0,
+      });
+    }
+  }, [delayedPage]);
+
   return (
-    <group {...props}>
+    <group
+      {...props}
+      ref={bookRef}
+      position={[cont.x, cont.y, cont.z]}
+      rotation={[rota.x, rota.y, rota.z]}
+    >
       {[...pages].map((pageData, index) => (
         <Page
           key={`페이지${pageData.id}`}
