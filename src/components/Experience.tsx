@@ -7,12 +7,12 @@ import {
   useDepthBuffer,
 } from '@react-three/drei';
 import Book from './Book';
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Vector3 } from 'three';
 import { useThree, Vector3Props } from '@react-three/fiber';
 import { useControls } from 'leva';
 import { compressNormals } from 'three/examples/jsm/utils/GeometryCompressionUtils.js';
-
+import * as THREE from 'three';
 export default function Experience() {
   const control = useRef<any>(null);
   // const depthBuffer = useDepthBuffer({ frames: 1 });
@@ -24,7 +24,7 @@ export default function Experience() {
         z: { value: 2, min: -10, max: 10, step: 0.1 },
       },
       shadow: { value: true },
-      spotlight: { value: true, distance: { value: 6, min: 0, max: 20, step: 0.1 } },
+      spotlight: { value: true, distance: { value: 80, min: 0, max: 100, step: 0.1 } },
     };
   }, []);
 
@@ -53,7 +53,7 @@ export default function Experience() {
         ground={{ height: -1, radius: 5, scale: 50 }}
       /> */}
 
-      <MovingSpot
+      {/* <MovingSpot
         // depthBuffer={depthBuffer}
         color="white"
         position={[3, 3, 2]}
@@ -66,7 +66,7 @@ export default function Experience() {
         position={[1, 3, 0]}
         spotlight={spotlight.value}
         spotlightDistance={spotlightDistance.distance}
-      />
+      /> */}
       <directionalLight
         position={[lightPosition.x, lightPosition.y, lightPosition.z]}
         intensity={4}
@@ -81,6 +81,12 @@ export default function Experience() {
         <planeGeometry args={[100, 100]} />
         <shadowMaterial transparent opacity={0.2} />
       </mesh>
+      <Lamp
+        position={[0, 1.52, 0]}
+        scale={0.1}
+        spotlight={spotlight.value}
+        spotlightDistance={spotlightDistance.distance}
+      />
     </>
   );
 }
@@ -115,5 +121,33 @@ function MovingSpot({
       intensity={2}
       {...props}
     />
+  );
+}
+export function Lamp({
+  spotlight,
+  spotlightDistance,
+  ...props
+}: { spotlight: boolean; spotlightDistance: boolean } & any) {
+  const [target] = useState(() => new THREE.Object3D());
+  console.log(target);
+  return (
+    <mesh {...props}>
+      <cylinderGeometry args={[0.5, 1.5, 2, 32]} />
+      <meshStandardMaterial />
+      <SpotLight
+        castShadow={false}
+        target={target}
+        penumbra={0.2}
+        radiusTop={0.4}
+        radiusBottom={40}
+        distance={spotlightDistance}
+        angle={0.45}
+        attenuation={spotlight ? 20 : 0}
+        anglePower={5}
+        intensity={1}
+        opacity={0.2}
+      />
+      <primitive object={target} position={[0, -1, 0]} />
+    </mesh>
   );
 }
