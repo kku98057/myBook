@@ -29,11 +29,11 @@ export const pages: pageProps[] = [
 ];
 
 // 페이지들
-for (let i = 1; i < pictures.length; i++) {
+for (let i = 1; i < pictures.length - 1; i += 2) {
   pages.push({
     id: i,
     front: pictures[i % pictures.length],
-    back: pictures[i],
+    back: pictures[(i + 1) % pictures.length],
   });
 }
 // back 커버
