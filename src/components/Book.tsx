@@ -1,7 +1,7 @@
 import { GroupProps, useFrame } from '@react-three/fiber';
 import { pageProps } from '../types/pageTypes';
 import { pages } from './UI';
-import { useEffect, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bone,
   BoxGeometry,
@@ -22,12 +22,13 @@ import {
   Uint16BufferAttribute,
   Vector3,
 } from 'three';
-import { useHelper, useTexture } from '@react-three/drei';
+import { useCursor, useHelper, useTexture } from '@react-three/drei';
 import { degToRad, MathUtils } from 'three/src/math/MathUtils.js';
 import { usePageStore } from '../store/pageAtom';
 import { easing } from 'maath';
 
 const easingFactor = 0.35; // 책 넘기는 속도
+const easingFactorFold = 0.3;
 const insideCurveStrength = 0.18; // 책을 얼마나 넘기는지 (강도)
 const outsideCurveStrenth = 0.05; //
 const turnningCurveStrenth = 0.09;
@@ -84,139 +85,200 @@ pages.forEach((page) => {
   useTexture.preload(`/textures/book-cover-roughness.jpg`);
 });
 
-const Page = ({
-  number,
-  data,
-  page,
-  opened,
-  bookClose,
-  ...props
-}: {
-  number: number;
-  data: pageProps;
-  page: number;
-  opened: boolean;
-  bookClose: boolean;
-} & GroupProps) => {
-  const [picture, picture2, pictureRoughness] = useTexture([
-    `/textures/${data.front}.jpg`,
-    `/textures/${data.back}.jpg`,
-    ...(number === 0 || number === pages.length - 1 ? [`/textures/book-cover-roughness.jpg`] : []),
-  ]);
-  // RGB(빨간색, 녹색, 파란색) 값으로 표현하며, 모니터와 같은 디스플레이 장치에서 색상을 정확하게 표시하기 위해 사용
-  picture.colorSpace = picture2.colorSpace = SRGBColorSpace;
+const Page = memo(
+  ({
+    number,
+    data,
+    page,
+    opened,
+    bookClose,
+    ...props
+  }: {
+    number: number;
+    data: pageProps;
+    page: number;
+    opened: boolean;
+    bookClose: boolean;
+  } & GroupProps) => {
+    const [picture, picture2, pictureRoughness] = useTexture([
+      `/textures/${data.front}.jpg`,
+      `/textures/${data.back}.jpg`,
+      ...(number === 0 || number === pages.length - 1
+        ? [`/textures/book-cover-roughness.jpg`]
+        : []),
+    ]);
+    // RGB(빨간색, 녹색, 파란색) 값으로 표현하며, 모니터와 같은 디스플레이 장치에서 색상을 정확하게 표시하기 위해 사용
+    picture.colorSpace = picture2.colorSpace = SRGBColorSpace;
 
-  const turnedAt = useRef<number>(0);
-  const lastOpened = useRef(opened);
+    const turnedAt = useRef<number>(0);
+    const lastOpened = useRef(opened);
 
-  const group = useRef<Group<Object3DEventMap>>(null);
-  const skinnedMeshRef = useRef<any>(null);
+    const group = useRef<Group<Object3DEventMap>>(null);
+    const skinnedMeshRef = useRef<any>(null);
 
-  //   스킨메시 생성
-  const manualSkinnedMesh = useMemo(() => {
-    const bones = [];
-    for (let i = 0; i <= PAGE_SEGMENTS; i++) {
-      //새로운 빼대 생성
-      const bone = new Bone();
-      // 뼈대를 추가
-      bones.push(bone);
-      if (i === 0) {
-        bone.position.x = 0; //첫번째 뼈대는 무조건 왼쪽으로(0으로)
-      } else {
-        bone.position.x = SEGMENT_WIDTH; //나버지 뼈대는 SEGMENT_WIDTH만큼
-      }
-      if (i > 0) {
-        bones[i - 1].add(bone); // 이전뼈대에 현재뼈대를 추가
-      }
-    }
-
-    const skeleton = new Skeleton(bones);
-    const materials = [
-      ...pageMaterials,
-      new MeshStandardMaterial({
-        color: whiteColor,
-        map: picture,
-        ...(number === 0 ? { roughnessMap: pictureRoughness } : { roughness: 0.1 }),
-      }),
-      new MeshStandardMaterial({
-        color: whiteColor,
-        map: picture2,
-        ...(number === pages.length - 1 ? { roughnessMap: pictureRoughness } : { roughness: 0.1 }),
-      }),
-    ];
-    const mesh = new SkinnedMesh(pageGeometry, materials);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.frustumCulled = false;
-    mesh.add(skeleton.bones[0]);
-    mesh.bind(skeleton);
-    return mesh;
-  }, []);
-
-  //   useHelper(skinnedMeshRef, SkeletonHelper);
-
-  useFrame((_, delta) => {
-    if (!skinnedMeshRef.current) {
-      return;
-    }
-
-    if (lastOpened.current !== opened) {
-      turnedAt.current = +new Date().getTime();
-      lastOpened.current = opened;
-    }
-
-    let turningTime = Math.min(400, new Date().getTime() - turnedAt.current) / 400;
-    turningTime = Math.sin(turningTime * Math.PI);
-
-    let targetRotation = opened ? -Math.PI / 2 : Math.PI / 2;
-    if (!bookClose) {
-      targetRotation += degToRad(number * 0.8);
-    }
-    const bones = skinnedMeshRef.current.skeleton.bones;
-
-    for (let i = 0; i < bones.length; i++) {
-      const target = i === 0 ? group.current : bones[i];
-
-      const insideCurveIntensity = i < 8 ? Math.sin(i * 0.2 + 0.25) : 0;
-      const outsideCurveIntensity = i > 8 ? Math.cos(i * 0.3 + 0.09) : 0;
-      const turningCurveIntensity = Math.sin(i * Math.PI * (1 / bones.length)) * turningTime;
-      let rotationAngle =
-        insideCurveIntensity * insideCurveStrength * targetRotation -
-        outsideCurveStrenth * outsideCurveIntensity * targetRotation -
-        turnningCurveStrenth * turningCurveIntensity * targetRotation;
-      if (bookClose) {
+    //   스킨메시 생성
+    const manualSkinnedMesh = useMemo(() => {
+      const bones = [];
+      for (let i = 0; i <= PAGE_SEGMENTS; i++) {
+        //새로운 빼대 생성
+        const bone = new Bone();
+        // 뼈대를 추가
+        bones.push(bone);
         if (i === 0) {
-          rotationAngle = targetRotation;
+          bone.position.x = 0; //첫번째 뼈대는 무조건 왼쪽으로(0으로)
         } else {
-          rotationAngle = 0;
+          bone.position.x = SEGMENT_WIDTH; //나버지 뼈대는 SEGMENT_WIDTH만큼
+        }
+        if (i > 0) {
+          bones[i - 1].add(bone); // 이전뼈대에 현재뼈대를 추가
         }
       }
-      easing.dampAngle(target.rotation, 'y', rotationAngle, easingFactor, delta);
-    }
-  });
-  return (
-    <group ref={group} {...props}>
-      <primitive
-        object={manualSkinnedMesh}
-        ref={skinnedMeshRef}
-        position-z={-number * PAGE_DEPTH + page * PAGE_DEPTH}
-      />
-    </group>
-  );
-};
+
+      const skeleton = new Skeleton(bones);
+      const materials = [
+        ...pageMaterials,
+        new MeshStandardMaterial({
+          color: whiteColor,
+          map: picture,
+          ...(number === 0 ? { roughnessMap: pictureRoughness } : { roughness: 0.1 }),
+        }),
+        new MeshStandardMaterial({
+          color: whiteColor,
+          map: picture2,
+          ...(number === pages.length - 1
+            ? { roughnessMap: pictureRoughness }
+            : { roughness: 0.1 }),
+        }),
+      ];
+      const mesh = new SkinnedMesh(pageGeometry, materials);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.frustumCulled = false;
+      mesh.add(skeleton.bones[0]);
+      mesh.bind(skeleton);
+      return mesh;
+    }, []);
+
+    //   useHelper(skinnedMeshRef, SkeletonHelper);
+
+    useFrame((_, delta) => {
+      if (!skinnedMeshRef.current) {
+        return;
+      }
+
+      if (lastOpened.current !== opened) {
+        turnedAt.current = +new Date().getTime();
+        lastOpened.current = opened;
+      }
+
+      let turningTime = Math.min(400, new Date().getTime() - turnedAt.current) / 400;
+      turningTime = Math.sin(turningTime * Math.PI);
+
+      let targetRotation = opened ? -Math.PI / 2 : Math.PI / 2;
+      if (!bookClose) {
+        targetRotation += degToRad(number * 0.8);
+      }
+      const bones = skinnedMeshRef.current.skeleton.bones;
+
+      for (let i = 0; i < bones.length; i++) {
+        const target = i === 0 ? group.current : bones[i];
+
+        const insideCurveIntensity = i < 8 ? Math.sin(i * 0.2 + 0.25) : 0;
+        const outsideCurveIntensity = i > 8 ? Math.cos(i * 0.3 + 0.09) : 0;
+        const turningCurveIntensity = Math.sin(i * Math.PI * (1 / bones.length)) * turningTime;
+        let rotationAngle =
+          insideCurveIntensity * insideCurveStrength * targetRotation -
+          outsideCurveStrenth * outsideCurveIntensity * targetRotation -
+          turnningCurveStrenth * turningCurveIntensity * targetRotation;
+        let foldRotationAngle = degToRad(Math.sin(targetRotation) * 2);
+        if (bookClose) {
+          if (i === 0) {
+            rotationAngle = targetRotation;
+            foldRotationAngle = 0;
+          } else {
+            rotationAngle = 0;
+          }
+        }
+        easing.dampAngle(target.rotation, 'y', rotationAngle, easingFactor, delta);
+
+        const foldIntensity =
+          i > 8 ? Math.sin(i * Math.PI * (1 / bones.length) - 0.5) * turningTime : 0;
+        easing.dampAngle(
+          target.rotation,
+          'x',
+          foldRotationAngle * foldIntensity,
+          easingFactorFold,
+          delta
+        );
+      }
+    });
+    const { page: p, setPage } = usePageStore((state) => state);
+    const [highlighted, setHighlighted] = useState(false);
+    useCursor(highlighted);
+    const handleClick = useCallback(
+      (e: any) => {
+        e.stopPropagation();
+        setPage(opened ? number : number + 1);
+        setHighlighted(false);
+      },
+      [opened, number]
+    );
+    return (
+      <group
+        ref={group}
+        {...props}
+        onPointerEnter={(e) => {
+          e.stopPropagation();
+          setHighlighted(true);
+        }}
+        onPointerLeave={(e) => {
+          e.stopPropagation();
+          setHighlighted(false);
+        }}
+        onClick={handleClick}
+      >
+        <primitive
+          object={manualSkinnedMesh}
+          ref={skinnedMeshRef}
+          position-z={-number * PAGE_DEPTH + page * PAGE_DEPTH}
+        />
+      </group>
+    );
+  }
+);
 
 export default function Book({ ...props }) {
   const { page } = usePageStore((state) => state);
+  const [delayedPage, setDelayedPage] = useState<number>(page);
+
+  useEffect(() => {
+    const goToPage = () => {
+      setDelayedPage((prevDelayedPage) => {
+        if (page === prevDelayedPage) {
+          return prevDelayedPage; // 현재 페이지와 같으면 업데이트하지 않음
+        }
+        // 페이지가 변경되었으므로, 1씩 증가 또는 감소
+        return page > prevDelayedPage ? prevDelayedPage + 1 : prevDelayedPage - 1;
+      });
+    };
+
+    // 타이머를 설정하여 일정 시간 간격으로 페이지를 업데이트
+    const timeout = setTimeout(goToPage, Math.abs(page - delayedPage) > 2 ? 50 : 150);
+
+    return () => {
+      clearTimeout(timeout); // 타이머 정리
+    };
+  }, [page, delayedPage]);
   return (
     <group {...props}>
       {[...pages].map((pageData, index) => (
         <Page
           key={`페이지${pageData.id}`}
           number={index}
-          page={page}
+          page={delayedPage}
           data={pageData}
-          opened={page > index}
-          bookClose={page === 0 || page === pages.length}
+          opened={delayedPage > index}
+          bookClose={delayedPage === 0 || delayedPage === pages.length}
         />
       ))}
     </group>
