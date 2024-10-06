@@ -10,4 +10,4 @@ const routerConfig = [
     children: [{ index: true, element: <MainPage /> }],
   },
 ];
-export const routers = createBrowserRouter(routerConfig, { basename: '/mybook' });
+export const routers = createBrowserRouter(routerConfig, { basename: '/myBook' });

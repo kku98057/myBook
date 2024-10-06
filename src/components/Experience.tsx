@@ -1,6 +1,7 @@
 import {
   ContactShadows,
   Environment,
+  Float,
   Lightformer,
   OrbitControls,
   SpotLight,
@@ -13,6 +14,7 @@ import { useThree, Vector3Props } from '@react-three/fiber';
 import { useControls } from 'leva';
 import { compressNormals } from 'three/examples/jsm/utils/GeometryCompressionUtils.js';
 import * as THREE from 'three';
+
 export default function Experience() {
   const control = useRef<any>(null);
   // const depthBuffer = useDepthBuffer({ frames: 1 });
@@ -34,8 +36,9 @@ export default function Experience() {
   const spotlightDistance = useControls('스포트라이트', options.spotlight);
   return (
     <>
-      <Book control={control} />
-
+      <Float speed={3} floatingRange={[0, 0]} rotationIntensity={0.5}>
+        <Book control={control} />
+      </Float>
       <OrbitControls
         ref={control}
         enabled={false}
@@ -129,7 +132,6 @@ export function Lamp({
   ...props
 }: { spotlight: boolean; spotlightDistance: boolean } & any) {
   const [target] = useState(() => new THREE.Object3D());
-  console.log(target);
   return (
     <mesh {...props}>
       <cylinderGeometry args={[0.5, 1.5, 2, 32]} />

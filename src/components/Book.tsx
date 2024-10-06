@@ -1,28 +1,31 @@
 import { GroupProps, useFrame, useThree } from '@react-three/fiber';
 import { pageProps } from '../types/pageTypes';
-import { pages } from './UI';
+import { pages, pageTitle } from './UI';
 import gsap from 'gsap';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bone,
   BoxGeometry,
+  BoxHelper,
   Color,
   Float32BufferAttribute,
   Group,
   MeshStandardMaterial,
   Object3DEventMap,
   Skeleton,
+  SkeletonHelper,
   SkinnedMesh,
   SRGBColorSpace,
   Uint16BufferAttribute,
   Vector3,
 } from 'three';
-import { useCursor, useTexture } from '@react-three/drei';
+import { Html, useCursor, useHelper, useTexture } from '@react-three/drei';
 import { degToRad, MathUtils } from 'three/src/math/MathUtils.js';
-import { usePageStore } from '../store/pageAtom';
+import { useEnteredStore, usePageStore } from '../store/pageAtom';
 import { easing } from 'maath';
 
 import { useControls } from 'leva';
+import { useNavigate } from 'react-router-dom';
 
 const easingFactor = 0.35; // 책 넘기는 속도
 const easingFactorFold = 0.3;
@@ -98,6 +101,7 @@ const Page = memo(
     opened: boolean;
     bookClose: boolean;
   } & GroupProps) => {
+    const { entered } = useEnteredStore((state) => state);
     const [picture, picture2, pictureRoughness] = useTexture([
       `${import.meta.env.BASE_URL}/textures/${data.front}.jpg`,
       `${import.meta.env.BASE_URL}/textures/${data.back}.jpg`,
@@ -158,10 +162,12 @@ const Page = memo(
       mesh.frustumCulled = false;
       mesh.add(skeleton.bones[0]);
       mesh.bind(skeleton);
+
       return mesh;
     }, []);
 
-    // useHelper(skinnedMeshRef, SkeletonHelper);
+    useHelper(skinnedMeshRef, SkeletonHelper);
+    console.log(skinnedMeshRef);
 
     useFrame((_, delta) => {
       if (!skinnedMeshRef.current) {
@@ -222,25 +228,48 @@ const Page = memo(
       }
     });
     const { setPage } = usePageStore((state) => state);
+    const navigator = useNavigate();
     const [highlighted, setHighlighted] = useState(false);
     useCursor(highlighted);
     const handleClick = useCallback(
       (e: any) => {
+        if (!entered) return;
         e.stopPropagation();
-        setPage(opened ? number : number + 1);
+        console.log(e);
         setHighlighted(false);
+        console.log(opened);
+        // setPage(opened ? number : number + 1);
+        if (opened && data.backUrl) {
+          if (data.backUrl.includes('http')) {
+            return window.open(data.backUrl);
+          } else {
+            navigator(data.backUrl);
+          }
+        }
+        if (!opened && data.frontUrl) {
+          if (data.frontUrl.includes('http')) {
+            return window.open(data.frontUrl);
+          } else {
+            navigator(data.frontUrl);
+          }
+        }
+        setPage(opened ? number : number + 1);
       },
       [opened, number]
     );
+
     return (
       <group
         ref={group}
         {...props}
         onPointerEnter={(e) => {
+          if (!entered) return;
           e.stopPropagation();
           setHighlighted(true);
+          console.log(e);
         }}
         onPointerLeave={(e) => {
+          if (!entered) return;
           e.stopPropagation();
           setHighlighted(false);
         }}
@@ -257,7 +286,9 @@ const Page = memo(
 );
 
 export default function Book({ ...props }: { control: any } & any) {
+  const { entered, setEntered } = useEnteredStore((state) => state);
   const bookRef = useRef<any>(null);
+  const groupRef = useRef<any>(null);
   const { page } = usePageStore((state) => state);
   const [delayedPage, setDelayedPage] = useState<number>(page);
 
@@ -284,6 +315,7 @@ export default function Book({ ...props }: { control: any } & any) {
   const aspectRatio = window.innerWidth / window.innerHeight;
 
   useEffect(() => {
+    if (!entered) return;
     if (page === 0) {
       gsap.to(bookRef.current.position, {
         x: -0.3 * aspectRatio, // 비율을 적용하여 조정
@@ -301,23 +333,40 @@ export default function Book({ ...props }: { control: any } & any) {
     }
   }, [page]);
 
+  useEffect(() => {
+    if (entered) return;
+    gsap.fromTo(
+      groupRef.current.position,
+      {
+        y: -2,
+      },
+      { y: 0, duration: 1 }
+    );
+    gsap.from(groupRef.current.rotation, {
+      y: Math.PI * 2,
+      duration: 2,
+      onComplete: () => setEntered(true),
+    });
+  }, [entered]);
   return (
-    <group
-      {...props}
-      ref={bookRef}
-      position={[-0.3 * aspectRatio, 0, 0]}
-      rotation={[0, -1.34, 0.11]}
-    >
-      {[...pages].map((pageData, index) => (
-        <Page
-          key={`페이지${pageData.id}`}
-          number={index}
-          page={delayedPage}
-          data={pageData}
-          opened={delayedPage > index}
-          bookClose={delayedPage === 0 || delayedPage === pages.length}
-        />
-      ))}
+    <group ref={groupRef}>
+      <group
+        {...props}
+        ref={bookRef}
+        position={[-0.3 * aspectRatio, 0, 0]}
+        rotation={[0, -1.34, 0.11]}
+      >
+        {[...pages].map((pageData, index) => (
+          <Page
+            key={`페이지${pageData.id}`}
+            number={index}
+            page={delayedPage}
+            data={pageData}
+            opened={delayedPage > index}
+            bookClose={delayedPage === 0 || delayedPage === pages.length}
+          />
+        ))}
+      </group>
     </group>
   );
 }

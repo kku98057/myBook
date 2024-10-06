@@ -7,3 +7,10 @@ export const usePageStore = create<pageState>((set) => ({
   prevPage: (by) => set((state) => ({ page: state.page - by })),
   setPage: (by) => set(() => ({ page: by })),
 }));
+
+export const useEnteredStore = create<{ entered: boolean; setEntered: (by: boolean) => void }>(
+  (set) => ({
+    entered: false,
+    setEntered: (by: boolean) => set(() => ({ entered: by })),
+  })
+);
