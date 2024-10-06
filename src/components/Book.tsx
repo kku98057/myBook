@@ -166,8 +166,7 @@ const Page = memo(
       return mesh;
     }, []);
 
-    useHelper(skinnedMeshRef, SkeletonHelper);
-    console.log(skinnedMeshRef);
+    // useHelper(skinnedMeshRef, SkeletonHelper);
 
     useFrame((_, delta) => {
       if (!skinnedMeshRef.current) {
@@ -233,11 +232,9 @@ const Page = memo(
     useCursor(highlighted);
     const handleClick = useCallback(
       (e: any) => {
-        if (!entered) return;
         e.stopPropagation();
-        console.log(e);
+        if (!entered) return;
         setHighlighted(false);
-        console.log(opened);
         // setPage(opened ? number : number + 1);
         if (opened && data.backUrl) {
           if (data.backUrl.includes('http')) {
@@ -255,7 +252,7 @@ const Page = memo(
         }
         setPage(opened ? number : number + 1);
       },
-      [opened, number]
+      [opened, number, entered]
     );
 
     return (
@@ -266,7 +263,6 @@ const Page = memo(
           if (!entered) return;
           e.stopPropagation();
           setHighlighted(true);
-          console.log(e);
         }}
         onPointerLeave={(e) => {
           if (!entered) return;
@@ -331,7 +327,7 @@ export default function Book({ ...props }: { control: any } & any) {
         x: 0,
       });
     }
-  }, [page]);
+  }, [page, entered]);
 
   useEffect(() => {
     if (entered) return;
